@@ -46,8 +46,10 @@ class FirebaseService: ObservableObject {
         return user
     }
     
-    func signOut() throws {
+    @MainActor func signOut() throws {
         try Auth.auth().signOut()
+        // Also sign out from Google if user was signed in with Google
+        GoogleSignInService.shared.signOut()
     }
     
     func getCurrentUser() -> User? {
@@ -62,6 +64,31 @@ class FirebaseService: ObservableObject {
             dateOfBirth: nil,
             gender: nil
         )
+    }
+    
+    // MARK: - Google Sign-In
+    func signInWithGoogle() async throws -> User {
+        let authResult = try await GoogleSignInService.shared.signIn()
+        
+        // Check if user exists in Firestore
+        do {
+            let user = try await getUserFromFirestore(userId: authResult.user.uid)
+            return user
+        } catch {
+            // User doesn't exist in Firestore, create new user
+            let user = User(
+                id: authResult.user.uid,
+                email: authResult.user.email ?? "",
+                username: authResult.user.displayName ?? "",
+                firstName: authResult.user.displayName ?? "",
+                lastName: "",
+                dateOfBirth: nil,
+                gender: nil
+            )
+            
+            try await saveUserToFirestore(user)
+            return user
+        }
     }
     
     // MARK: - Firestore Operations
@@ -84,7 +111,7 @@ class FirebaseService: ObservableObject {
         try await db.collection("users").document(user.id).setData(userData)
     }
     
-    private func getUserFromFirestore(userId: String) async throws -> User {
+    func getUserFromFirestore(userId: String) async throws -> User {
         guard let db = db else {
             throw FirebaseError.userNotFound
         }

@@ -14,19 +14,47 @@ class AuthManager: ObservableObject {
     @Published var isLoading = false
     @Published var showError = false
     @Published var errorMessage = ""
+    @Published var currentUser: User?
     
     private let firebaseService = FirebaseService.shared
     
     private init() {
         checkAuthState()
+        
+        // Listen for authentication state changes
+        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            Task { @MainActor in
+                self?.checkAuthState()
+            }
+        }
     }
     
     // MARK: - Authentication State
     func checkAuthState() {
-        if let user = Auth.auth().currentUser {
-            isAuthenticated = true
+        let user = Auth.auth().currentUser
+        isAuthenticated = user != nil
+        
+        // Clear form if user is not authenticated
+        if !isAuthenticated {
+            clearForm()
+            currentUser = nil
         } else {
-            isAuthenticated = false
+            // Load current user data if authenticated
+            Task {
+                await loadCurrentUser()
+            }
+        }
+    }
+    
+    // MARK: - Load Current User
+    private func loadCurrentUser() async {
+        guard let firebaseUser = Auth.auth().currentUser else { return }
+        
+        do {
+            let user = try await firebaseService.getUserFromFirestore(userId: firebaseUser.uid)
+            currentUser = user
+        } catch {
+            print("Failed to load current user: \(error)")
         }
     }
     
@@ -46,6 +74,7 @@ class AuthManager: ObservableObject {
         
         do {
             let user = try await firebaseService.signIn(email: email, password: password)
+            currentUser = user
             isAuthenticated = true
         } catch {
             showError(message: error.localizedDescription)
@@ -66,10 +95,11 @@ class AuthManager: ObservableObject {
     }
     
     // MARK: - Helper Methods
-    private func showError(message: String) {
+    func showError(message: String) {
         errorMessage = message
         showError = true
     }
+    
     
     private func clearForm() {
         email = ""

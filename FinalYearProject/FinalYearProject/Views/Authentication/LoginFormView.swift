@@ -1,12 +1,14 @@
 import SwiftUI
 
-struct SignupView: View {
-    @StateObject private var viewModel = SignupViewModel()
-    @Binding var showingLogin: Bool
+struct LoginFormView<ViewModel: LoginFormViewModelProtocol>: View {
+    @ObservedObject var viewModel: ViewModel
+    let onSignUpTapped: () -> Void
+    let onSocialLoginTapped: (SocialLoginType) -> Void
     
     var body: some View {
         NavigationView {
             ZStack {
+                // Background gradient
                 LinearGradient(
                     colors: [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.2, blue: 0.4)],
                     startPoint: .topLeading,
@@ -23,46 +25,55 @@ struct SignupView: View {
                     
                     formSection
                     
-                    termsSection
+                    forgotPasswordSection
                     
-                    signupButton
+                    signInButton
                     
-                    loginLinkSection
+                    signUpLinkSection
+                    
+                    Spacer()
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
             }
         }
         .navigationBarHidden(true)
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK") { }
-        } message: {
-            Text(viewModel.errorMessage)
-        }
     }
-    
     
     // MARK: - Welcome Section
     private var welcomeSection: some View {
-        VStack(spacing: 8) {
-            Text("Join OCR Scanner")
-                .font(.title2)
-                .fontWeight(.semibold)
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.viewfinder")
+                .font(.system(size: 60))
                 .foregroundColor(.white)
+                .frame(width: 100, height: 100)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                )
             
-            Text("Transform your documents into digital text")
-                .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
+            VStack(spacing: 8) {
+                Text("Welcome Back")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                
+                Text("Enter credential to sign in")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+            }
         }
+        .padding(.top, 20)
     }
     
     // MARK: - Social Login Section
     private var socialLoginSection: some View {
         VStack(spacing: 16) {
+            // Google Sign In
             Button(action: {
                 Task {
-                    await viewModel.signUpWithGoogle()
+                    onSocialLoginTapped(.google)
                 }
             }) {
                 HStack(spacing: 12) {
@@ -96,7 +107,7 @@ struct SignupView: View {
                 .frame(height: 1)
                 .foregroundColor(.white.opacity(0.3))
             
-            Text("or sign up with email")
+            Text("or sign in with email")
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.7))
                 .padding(.horizontal, 16)
@@ -110,6 +121,7 @@ struct SignupView: View {
     // MARK: - Form Section
     private var formSection: some View {
         VStack(spacing: 16) {
+            // Email
             inputField(
                 icon: "envelope",
                 placeholder: "example@email.com",
@@ -118,24 +130,14 @@ struct SignupView: View {
                 textContentType: .emailAddress
             )
             
+            // Password
             inputField(
                 icon: "lock",
-                placeholder: "At least 6 characters",
+                placeholder: "Enter your password",
                 text: $viewModel.password,
                 isSecure: true,
-                textContentType: .newPassword
+                textContentType: .password
             )
-            
-            inputField(
-                icon: "person",
-                placeholder: "Name(3-20 characters)",
-                text: $viewModel.username,
-                textContentType: .username
-            )
-            
-            dateOfBirthField
-            
-            genderField
         }
     }
     
@@ -195,147 +197,24 @@ struct SignupView: View {
         )
     }
     
-    // MARK: - Date of Birth Field
-    private var dateOfBirthField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: "calendar")
-                    .foregroundColor(.white.opacity(0.7))
-                    .frame(width: 20)
-                
-                Button(action: {
-                    viewModel.showDatePicker = true
-                }) {
-                    HStack {
-                        Text(viewModel.dateOfBirth.isEmpty ? "Select your birthday" : viewModel.dateOfBirth)
-                            .foregroundColor(viewModel.dateOfBirth.isEmpty ? .white.opacity(0.6) : .white)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(.white.opacity(0.7))
-                            .font(.caption)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
+    // MARK: - Forgot Password Section
+    private var forgotPasswordSection: some View {
+        HStack {
+            Spacer()
             
-            Text("Select your date of birth")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.leading, 16)
-        }
-        .sheet(isPresented: $viewModel.showDatePicker) {
-            datePickerSheet
-        }
-    }
-    
-    // MARK: - Date Picker Sheet
-    private var datePickerSheet: some View {
-        NavigationView {
-            VStack {
-                DatePicker(
-                    "Date of Birth",
-                    selection: $viewModel.selectedDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(WheelDatePickerStyle())
-                .padding()
-                
-                Button("Done") {
-                    let formatter = DateFormatter()
-                    formatter.dateStyle = .medium
-                    viewModel.dateOfBirth = formatter.string(from: viewModel.selectedDate)
-                    viewModel.showDatePicker = false
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(AppColors.primary)
-                .cornerRadius(12)
-                .padding(.horizontal)
+            Button("Forget Password??") {
+                viewModel.forgotPassword()
             }
-            .navigationTitle("Select Birthday")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        viewModel.showDatePicker = false
-                    }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Gender Field
-    private var genderField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: "person.2")
-                    .foregroundColor(.white.opacity(0.7))
-                    .frame(width: 20)
-                
-                Menu {
-                    Button("Male") {
-                        viewModel.gender = "Male"
-                    }
-                    Button("Female") {
-                        viewModel.gender = "Female"
-                    }
-                    Button("Other") {
-                        viewModel.gender = "Other"
-                    }
-                } label: {
-                    HStack {
-                        Text(viewModel.gender.isEmpty ? "Select gender" : viewModel.gender)
-                            .foregroundColor(viewModel.gender.isEmpty ? .white.opacity(0.6) : .white)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(.white.opacity(0.7))
-                            .font(.caption)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
-            
-            Text("Choose your gender")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
-                .padding(.leading, 16)
-        }
-    }
-    
-    // MARK: - Terms Section
-    private var termsSection: some View {
-        Text("By creating an account, you agree to our Terms of Service and Privacy Policy")
             .font(.caption)
-            .foregroundColor(.white.opacity(0.7))
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 20)
+            .foregroundColor(.white.opacity(0.8))
+        }
     }
     
-    // MARK: - Sign Up Button
-    private var signupButton: some View {
+    // MARK: - Sign In Button
+    private var signInButton: some View {
         Button(action: {
             Task {
-                await viewModel.signUp()
+                await viewModel.signIn()
             }
         }) {
             HStack {
@@ -344,7 +223,7 @@ struct SignupView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(0.8)
                 } else {
-                    Text("Create Account")
+                    Text("Sign in")
                         .font(.body)
                         .fontWeight(.semibold)
                 }
@@ -367,14 +246,15 @@ struct SignupView: View {
         .disabled(!viewModel.isFormValid || viewModel.isLoading)
     }
     
-    private var loginLinkSection: some View {
+    // MARK: - Sign Up Link Section
+    private var signUpLinkSection: some View {
         HStack {
-            Text("Already have an account?")
+            Text("Don't have any account?")
                 .font(.subheadline)
                 .foregroundColor(.white.opacity(0.7))
             
-            Button("Sign In") {
-                showingLogin = true
+            Button("Sign up Now") {
+                onSignUpTapped()
             }
             .font(.subheadline)
             .fontWeight(.semibold)
@@ -384,6 +264,27 @@ struct SignupView: View {
     }
 }
 
+// MARK: - Protocol for Login Form ViewModel
+protocol LoginFormViewModelProtocol: ObservableObject {
+    var email: String { get set }
+    var password: String { get set }
+    var isPasswordVisible: Bool { get set }
+    var isLoading: Bool { get }
+    var isFormValid: Bool { get }
+    
+    func signIn() async
+    func forgotPassword()
+}
+
+// MARK: - Social Login Types
+enum SocialLoginType {
+    case google
+}
+
 #Preview {
-    SignupView(showingLogin: .constant(false))
+    LoginFormView(
+        viewModel: LoginViewModel(),
+        onSignUpTapped: {},
+        onSocialLoginTapped: { _ in }
+    )
 } 

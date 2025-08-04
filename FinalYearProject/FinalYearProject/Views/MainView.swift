@@ -29,6 +29,11 @@ struct MainView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
+                
+                // Side Menu
+                SideMenuView(isShowing: $showingMenu, onSignOut: {
+                    viewModel.signOut()
+                })
             }
         }
         .navigationBarHidden(true)
@@ -58,20 +63,11 @@ struct MainView: View {
             
             Spacer()
             
-            // Temporary Sign Out Button
+            // Menu Button
             Button(action: {
-                viewModel.signOut()
-            }) {
-                Image(systemName: "rectangle.portrait.and.arrow.right")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.red.opacity(0.3))
-                    .clipShape(Circle())
-            }
-            
-            Button(action: {
-                showingMenu = true
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showingMenu = true
+                }
             }) {
                 Image(systemName: "line.horizontal.3")
                     .font(.title2)

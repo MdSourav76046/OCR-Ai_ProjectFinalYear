@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class LoginViewModel: ObservableObject {
+class LoginViewModel: ObservableObject, LoginFormViewModelProtocol {
     @Published var email = ""
     @Published var password = ""
     @Published var isPasswordVisible = false
@@ -30,6 +30,7 @@ class LoginViewModel: ObservableObject {
         
         do {
             let user = try await firebaseService.signIn(email: email, password: password)
+            AuthManager.shared.currentUser = user
             showSuccess = true
         } catch {
             showError(message: error.localizedDescription)
@@ -38,13 +39,21 @@ class LoginViewModel: ObservableObject {
         isLoading = false
     }
     
-    func signInWithGoogle() {
-        showError(message: "Google Sign In not implemented yet")
+    func signInWithGoogle() async {
+        isLoading = true
+        
+        do {
+            let user = try await firebaseService.signInWithGoogle()
+            AuthManager.shared.currentUser = user
+            showSuccess = true
+        } catch {
+            showError(message: error.localizedDescription)
+        }
+        
+        isLoading = false
     }
     
-    func signInWithFacebook() {
-        showError(message: "Facebook Sign In not implemented yet")
-    }
+
     
     func forgotPassword() {
         showError(message: "Forgot password not implemented yet")

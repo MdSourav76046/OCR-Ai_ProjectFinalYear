@@ -31,7 +31,7 @@ class SignupViewModel: ObservableObject {
     }
     
     var isFormComplete: Bool {
-        !email.isEmpty && !password.isEmpty && !username.isEmpty && !dateOfBirth.isEmpty
+        !email.isEmpty && !password.isEmpty && !username.isEmpty && !dateOfBirth.isEmpty && !gender.isEmpty
     }
     
     // MARK: - Sign Up Methods
@@ -61,8 +61,8 @@ class SignupViewModel: ObservableObject {
             
             // Clear form after successful signup
             clearForm()
-            showSuccess = true
             
+            // Update authentication state - this will automatically navigate to MainView
             AuthManager.shared.isAuthenticated = true
             
         } catch {
@@ -81,13 +81,26 @@ class SignupViewModel: ObservableObject {
         selectedDate = Date()
     }
     
-    func signUpWithGoogle() {
-        showError(message: "Google Sign In not implemented yet")
+    func signUpWithGoogle() async {
+        isLoading = true
+        
+        do {
+            let user = try await firebaseService.signInWithGoogle()
+            
+            // Clear form after successful signup
+            clearForm()
+            
+            // Update authentication state - this will automatically navigate to MainView
+            AuthManager.shared.isAuthenticated = true
+            
+        } catch {
+            showError(message: error.localizedDescription)
+        }
+        
+        isLoading = false
     }
     
-    func signUpWithFacebook() {
-        showError(message: "Facebook Sign In not implemented yet")
-    }
+
     
     // MARK: - Helper Methods
     private func showError(message: String) {
