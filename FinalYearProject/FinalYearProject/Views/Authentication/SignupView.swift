@@ -2,17 +2,14 @@ import SwiftUI
 
 struct SignupView: View {
     @StateObject private var viewModel = SignupViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
     @Binding var showingLogin: Bool
     
     var body: some View {
         NavigationView {
             ZStack {
-                LinearGradient(
-                    colors: [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.2, blue: 0.4)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all)
+                themeManager.currentTheme.backgroundGradient
+                    .ignoresSafeArea(.all)
                 
                 VStack(spacing: 30) {
                     welcomeSection
@@ -48,11 +45,11 @@ struct SignupView: View {
             Text("Join OCR Scanner")
                 .font(.title2)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
             
             Text("Transform your documents into digital text")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 .multilineTextAlignment(.center)
         }
     }
@@ -68,22 +65,22 @@ struct SignupView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "envelope.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.white)
+                        .foregroundColor(themeManager.currentTheme.textColor)
                     
                     Text("Continue with Google")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundColor(themeManager.currentTheme.textColor)
                     
                     Spacer()
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .background(Color.black.opacity(0.3))
+                .background(themeManager.currentTheme.buttonBackground)
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        .stroke(themeManager.currentTheme.buttonBorder, lineWidth: 1)
                 )
             }
         }
@@ -94,16 +91,16 @@ struct SignupView: View {
         HStack {
             Rectangle()
                 .frame(height: 1)
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(themeManager.currentTheme.dividerColor)
             
             Text("or sign up with email")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 .padding(.horizontal, 16)
             
             Rectangle()
                 .frame(height: 1)
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(themeManager.currentTheme.dividerColor)
         }
     }
     
@@ -150,14 +147,14 @@ struct SignupView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 .frame(width: 20)
             
             ZStack(alignment: .leading) {
                 // Custom placeholder
                 if text.wrappedValue.isEmpty {
                     Text(placeholder)
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(themeManager.currentTheme.secondaryTextColor.opacity(0.8))
                 }
                 
                 Group {
@@ -171,9 +168,9 @@ struct SignupView: View {
                 .keyboardType(keyboardType)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
-                .foregroundColor(.white)
-                .accentColor(.white)
-                .tint(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
+                .accentColor(themeManager.currentTheme.textColor)
+                .tint(themeManager.currentTheme.textColor)
             }
             
             if isSecure {
@@ -181,17 +178,17 @@ struct SignupView: View {
                     viewModel.isPasswordVisible.toggle()
                 }) {
                     Image(systemName: viewModel.isPasswordVisible ? "eye.slash" : "eye")
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
-        .background(Color.white.opacity(0.1))
+        .background(themeManager.currentTheme.inputFieldBackground)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
         )
     }
     
@@ -200,7 +197,7 @@ struct SignupView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
                 Image(systemName: "calendar")
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                     .frame(width: 20)
                 
                 Button(action: {
@@ -208,28 +205,28 @@ struct SignupView: View {
                 }) {
                     HStack {
                         Text(viewModel.dateOfBirth.isEmpty ? "Select your birthday" : viewModel.dateOfBirth)
-                            .foregroundColor(viewModel.dateOfBirth.isEmpty ? .white.opacity(0.6) : .white)
+                            .foregroundColor(viewModel.dateOfBirth.isEmpty ? themeManager.currentTheme.secondaryTextColor.opacity(0.8) : themeManager.currentTheme.textColor)
                         
                         Spacer()
                         
                         Image(systemName: "chevron.down")
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                             .font(.caption)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
+            .background(themeManager.currentTheme.inputFieldBackground)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
             )
             
             Text("Select your date of birth")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 .padding(.leading, 16)
         }
         .sheet(isPresented: $viewModel.showDatePicker) {
@@ -280,7 +277,7 @@ struct SignupView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
                 Image(systemName: "person.2")
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                     .frame(width: 20)
                 
                 Menu {
@@ -296,28 +293,28 @@ struct SignupView: View {
                 } label: {
                     HStack {
                         Text(viewModel.gender.isEmpty ? "Select gender" : viewModel.gender)
-                            .foregroundColor(viewModel.gender.isEmpty ? .white.opacity(0.6) : .white)
+                            .foregroundColor(viewModel.gender.isEmpty ? themeManager.currentTheme.secondaryTextColor.opacity(0.8) : themeManager.currentTheme.textColor)
                         
                         Spacer()
                         
                         Image(systemName: "chevron.down")
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                             .font(.caption)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
+            .background(themeManager.currentTheme.inputFieldBackground)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
             )
             
             Text("Choose your gender")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 .padding(.leading, 16)
         }
     }
@@ -326,7 +323,7 @@ struct SignupView: View {
     private var termsSection: some View {
         Text("By creating an account, you agree to our Terms of Service and Privacy Policy")
             .font(.caption)
-            .foregroundColor(.white.opacity(0.7))
+            .foregroundColor(themeManager.currentTheme.secondaryTextColor)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 20)
     }
@@ -371,14 +368,14 @@ struct SignupView: View {
         HStack {
             Text("Already have an account?")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
             
             Button("Sign In") {
                 showingLogin = true
             }
             .font(.subheadline)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundColor(themeManager.currentTheme.textColor)
         }
         .padding(.top, 20)
     }

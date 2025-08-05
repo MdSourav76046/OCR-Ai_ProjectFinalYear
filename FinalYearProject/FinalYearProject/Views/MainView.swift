@@ -2,18 +2,16 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
     @State private var showingMenu = false
+    @State private var navigateToSettings = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background gradient
-                LinearGradient(
-                    colors: [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.2, blue: 0.4)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea(.all)
+                themeManager.currentTheme.backgroundGradient
+                    .ignoresSafeArea(.all)
                 
                 VStack(spacing: 30) {
                     // Header
@@ -31,9 +29,20 @@ struct MainView: View {
                 .padding(.vertical, 20)
                 
                 // Side Menu
-                SideMenuView(isShowing: $showingMenu, onSignOut: {
-                    viewModel.signOut()
-                })
+                SideMenuView(
+                    isShowing: $showingMenu, 
+                    onSignOut: {
+                        viewModel.signOut()
+                    },
+                    onSettingsTapped: {
+                        navigateToSettings = true
+                    }
+                )
+            }
+            
+            // Navigation Destinations
+            .navigationDestination(isPresented: $navigateToSettings) {
+                SettingsView()
             }
         }
         .navigationBarHidden(true)
@@ -59,7 +68,7 @@ struct MainView: View {
             Text("Convert Image To Text")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
             
             Spacer()
             
@@ -71,9 +80,9 @@ struct MainView: View {
             }) {
                 Image(systemName: "line.horizontal.3")
                     .font(.title2)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                     .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.2))
+                    .background(themeManager.currentTheme.cardBackground)
                     .clipShape(Circle())
             }
         }
@@ -85,17 +94,17 @@ struct MainView: View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.viewfinder")
                 .font(.system(size: 60))
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
                 .frame(width: 100, height: 100)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(themeManager.currentTheme.cardBackground)
                 )
             
             Text("Choose your document source")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
                 .multilineTextAlignment(.center)
         }
     }
@@ -149,35 +158,35 @@ struct MainView: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                     .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.2))
+                    .background(themeManager.currentTheme.cardBackground)
                     .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.white)
+                        .foregroundColor(themeManager.currentTheme.textColor)
                     
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
+            .background(themeManager.currentTheme.cardBackground)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
             )
         }
     }

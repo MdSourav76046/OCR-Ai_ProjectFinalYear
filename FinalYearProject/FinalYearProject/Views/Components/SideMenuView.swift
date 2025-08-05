@@ -3,7 +3,9 @@ import SwiftUI
 struct SideMenuView: View {
     @Binding var isShowing: Bool
     let onSignOut: () -> Void
+    let onSettingsTapped: () -> Void
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var themeManager = ThemeManager.shared
     
     var body: some View {
         ZStack {
@@ -35,13 +37,7 @@ struct SideMenuView: View {
                     signOutButton
                 }
                 .frame(width: UIScreen.main.bounds.width * 0.7)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 0.1, green: 0.1, blue: 0.3), Color(red: 0.2, green: 0.2, blue: 0.5)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .background(themeManager.currentTheme.backgroundGradient)
                 .offset(x: isShowing ? 0 : UIScreen.main.bounds.width)
                 .animation(.easeInOut(duration: 0.3), value: isShowing)
             }
@@ -75,11 +71,11 @@ struct SideMenuView: View {
                         .fill(Color.white.opacity(0.2))
                 )
             
-            // User Name
-            Text(userDisplayName)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
+                               // User Name
+                   Text(userDisplayName)
+                       .font(.title2)
+                       .fontWeight(.semibold)
+                       .foregroundColor(themeManager.currentTheme.textColor)
         }
         .padding(.top, 40)
         .padding(.bottom, 30)
@@ -89,7 +85,10 @@ struct SideMenuView: View {
     private var menuItemsSection: some View {
         VStack(spacing: 0) {
             menuItem(icon: "gearshape", title: "Settings") {
-                // Handle settings
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isShowing = false
+                }
+                onSettingsTapped()
             }
             
             menuItem(icon: "clock.arrow.circlepath", title: "History") {
@@ -116,19 +115,19 @@ struct SideMenuView: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                     .frame(width: 24, height: 24)
                 
                 Text(title)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
@@ -166,5 +165,5 @@ struct SideMenuView: View {
 }
 
 #Preview {
-    SideMenuView(isShowing: .constant(true), onSignOut: {})
-} 
+    SideMenuView(isShowing: .constant(true), onSignOut: {}, onSettingsTapped: {})
+}
