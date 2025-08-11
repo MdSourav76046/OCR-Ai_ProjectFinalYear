@@ -1,0 +1,17 @@
+# Xcode
+xcuserdata/
+build/
+DerivedData/
+*.ipa
+*.dSYM
+
+# Sensitive Files (Never commit these!)
+GoogleService-Info.plist
+Config/APIKeys.swift
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
