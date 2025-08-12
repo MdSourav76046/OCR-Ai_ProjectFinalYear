@@ -4,6 +4,8 @@ struct SideMenuView: View {
     @Binding var isShowing: Bool
     let onSignOut: () -> Void
     let onSettingsTapped: () -> Void
+    let onHistoryTapped: () -> Void
+    let onSavedPDFsTapped: () -> Void
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var themeManager = ThemeManager.shared
     
@@ -92,11 +94,17 @@ struct SideMenuView: View {
             }
             
             menuItem(icon: "clock.arrow.circlepath", title: "History") {
-                // Handle history
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isShowing = false
+                }
+                onHistoryTapped()
             }
             
             menuItem(icon: "doc.fill", title: "Saved PDFs") {
-                // Handle saved PDFs
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isShowing = false
+                }
+                onSavedPDFsTapped()
             }
             
             menuItem(icon: "square.and.arrow.up", title: "Invite friends") {
@@ -111,29 +119,31 @@ struct SideMenuView: View {
     
     // MARK: - Menu Item Helper
     private func menuItem(icon: String, title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(themeManager.currentTheme.textColor)
-                    .frame(width: 24, height: 24)
-                
-                Text(title)
-                    .font(.body)
-                    .fontWeight(.medium)
-                    .foregroundColor(themeManager.currentTheme.textColor)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
-            }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .background(Color.clear)
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(themeManager.currentTheme.textColor)
+                .frame(width: 24, height: 24)
+            
+            Text(title)
+                .font(.body)
+                .fontWeight(.medium)
+                .foregroundColor(themeManager.currentTheme.textColor)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.clear)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            action()
+        }
     }
     
     // MARK: - Sign Out Button
@@ -165,5 +175,5 @@ struct SideMenuView: View {
 }
 
 #Preview {
-    SideMenuView(isShowing: .constant(true), onSignOut: {}, onSettingsTapped: {})
+    SideMenuView(isShowing: .constant(true), onSignOut: {}, onSettingsTapped: {}, onHistoryTapped: {}, onSavedPDFsTapped: {})
 }

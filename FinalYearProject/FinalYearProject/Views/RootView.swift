@@ -7,7 +7,7 @@ struct RootView: View {
     @State private var showingSignup = false
     @State private var showingLogin = false
     
-    var body: some View {
+    var body: some View { 
         Group {
             if authManager.isAuthenticated {
                 MainView()

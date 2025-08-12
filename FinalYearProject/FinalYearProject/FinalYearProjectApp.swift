@@ -1,11 +1,15 @@
 import SwiftUI
 import GoogleSignIn
 import FirebaseCore
+import FirebaseDatabase
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
+        
+        // Enable Firebase Database offline persistence (must be called before any other Database operations)
+        Database.database().isPersistenceEnabled = true
         
         // Configure Google Sign-In
         GoogleSignInService.shared.configure()

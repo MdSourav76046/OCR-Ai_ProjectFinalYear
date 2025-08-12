@@ -9,8 +9,12 @@ class FormatSelectionViewModel: ObservableObject {
     @Published var showError = false
     @Published var showSuccess = false
     @Published var errorMessage = ""
+    @Published var extractedText: String = ""
+    @Published var showTextResult = false
     
     private let firebaseService = FirebaseService.shared
+    private let mistralService = MistralAIService.shared
+    private let ocrHistoryService = OCRHistoryService.shared
     
     // MARK: - Document Processing
     func processDocument(image: UIImage, conversionType: ConversionType) async {
@@ -22,29 +26,33 @@ class FormatSelectionViewModel: ObservableObject {
         isLoading = true
         
         do {
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-                showError(message: "Failed to process image")
-                return
-            }
+            // Extract text from image using Mistral AI OCR
+            let rawText = try await mistralService.extractTextFromImage(image)
+            extractedText = mistralService.processExtractedText(rawText)
             
-            let fileName = "document_\(UUID().uuidString)"
-            let downloadURL = try await firebaseService.uploadDocument(imageData: imageData, fileName: fileName)
+            print("🔄 FormatSelectionViewModel: Processing document")
+            print("📝 Extracted text: \(extractedText.prefix(50))...")
+            print("🖼️ Image size: \(image.size)")
+            print("🔄 Conversion type: \(conversionType.rawValue)")
+            print("📄 Output format: \(selectedFormat.rawValue)")
             
-            // Create document record
-            let document = Document(
-                id: UUID().uuidString,
-                fileName: fileName,
-                fileType: .image,
-                conversionType: conversionType,
-                originalImage: downloadURL,
-                outputFormat: selectedFormat
+            // Save document to Firebase Database
+            ocrHistoryService.saveOCRResult(
+                text: extractedText,
+                image: image,
+                conversionType: conversionType.rawValue,
+                outputFormat: selectedFormat.rawValue,
+                saveFullImage: false  // Only save thumbnail to save space
             )
             
-            try await firebaseService.saveDocumentToHistory(document: document)
+            print("✅ FormatSelectionViewModel: Save function called")
             
-            try await simulateProcessing()
-            
-            showSuccess = true
+            // Show text result for text formats
+            if selectedFormat == .text {
+                showTextResult = true
+            } else {
+                showSuccess = true
+            }
             
         } catch {
             showError(message: error.localizedDescription)

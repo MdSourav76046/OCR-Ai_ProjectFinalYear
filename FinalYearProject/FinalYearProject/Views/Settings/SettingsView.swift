@@ -63,7 +63,7 @@ struct SettingsView: View {
             ThemeSelectionView()
         }
         .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary)
+            ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary, onImageSelected: {})
         }
     }
     
@@ -168,36 +168,38 @@ struct SettingsView: View {
     
     private func settingsRow(icon: String, title: String, subtitle: String? = nil, action: @escaping () -> Void) -> some View {
         VStack(spacing: 0) {
-            Button(action: action) {
-                HStack(spacing: 16) {
-                    Image(systemName: icon)
-                        .font(.title3)
+            HStack(spacing: 16) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(themeManager.currentTheme.textColor)
+                    .frame(width: 24, height: 24)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.body)
+                        .fontWeight(.medium)
                         .foregroundColor(themeManager.currentTheme.textColor)
-                        .frame(width: 24, height: 24)
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(title)
-                            .font(.body)
-                            .fontWeight(.medium)
-                            .foregroundColor(themeManager.currentTheme.textColor)
-                        
-                        if let subtitle = subtitle {
-                            Text(subtitle)
-                                .font(.caption)
-                                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
-                        }
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                     }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(themeManager.currentTheme.secondaryTextColor)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(themeManager.currentTheme.secondaryTextColor)
             }
-            .buttonStyle(PlainButtonStyle())
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                action()
+            }
             
             if title != "Terms of Service" {
                 Divider()

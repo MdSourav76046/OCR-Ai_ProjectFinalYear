@@ -9,7 +9,6 @@ struct FormatSelectionView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient
                 LinearGradient(
                     colors: [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.2, blue: 0.4)],
                     startPoint: .topLeading,
@@ -18,16 +17,12 @@ struct FormatSelectionView: View {
                 .ignoresSafeArea(.all)
                 
                 VStack(spacing: 30) {
-                    // Header
                     headerSection
                     
-                    // Image Preview
                     imagePreviewSection
                     
-                    // Format Options
                     formatOptionsSection
                     
-                    // Proceed Button
                     proceedButton
                     
                     Spacer()
@@ -48,6 +43,14 @@ struct FormatSelectionView: View {
             }
         } message: {
             Text("Document processed successfully!")
+        }
+        .sheet(isPresented: $viewModel.showTextResult) {
+            TextResultView(
+                extractedText: viewModel.extractedText,
+                originalImage: selectedImage,
+                conversionType: conversionType.rawValue,
+                outputFormat: viewModel.selectedFormat?.rawValue ?? "text"
+            )
         }
     }
     

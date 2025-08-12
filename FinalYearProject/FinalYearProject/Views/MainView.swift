@@ -5,6 +5,8 @@ struct MainView: View {
     @StateObject private var themeManager = ThemeManager.shared
     @State private var showingMenu = false
     @State private var navigateToSettings = false
+    @State private var navigateToHistory = false
+    @State private var navigateToSavedPDFs = false
     
     var body: some View {
         NavigationStack {
@@ -36,6 +38,12 @@ struct MainView: View {
                     },
                     onSettingsTapped: {
                         navigateToSettings = true
+                    },
+                    onHistoryTapped: {
+                        navigateToHistory = true
+                    },
+                    onSavedPDFsTapped: {
+                        navigateToSavedPDFs = true
                     }
                 )
             }
@@ -44,13 +52,33 @@ struct MainView: View {
             .navigationDestination(isPresented: $navigateToSettings) {
                 SettingsView()
             }
+            .navigationDestination(isPresented: $navigateToHistory) {
+                DocumentHistoryView()
+            }
+            .navigationDestination(isPresented: $navigateToSavedPDFs) {
+                SavedPDFView()
+            }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            // Start observing services when main view appears
+            OCRHistoryService.shared.startObserving()
+            SavedPDFService.shared.startObserving()
+        }
+        .onDisappear {
+            // Stop observing services when main view disappears
+            OCRHistoryService.shared.stopObserving()
+            SavedPDFService.shared.stopObserving()
+        }
         .sheet(isPresented: $viewModel.showingImagePicker) {
-            ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .photoLibrary)
+            ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .photoLibrary, onImageSelected: {
+                viewModel.showingFormatPicker = true
+            })
         }
         .sheet(isPresented: $viewModel.showingCamera) {
-            ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .camera)
+            ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .camera, onImageSelected: {
+                viewModel.showingFormatPicker = true
+            })
         }
         .sheet(isPresented: $viewModel.showingFormatPicker) {
             FormatSelectionView(selectedImage: viewModel.selectedImage!, conversionType: viewModel.selectedConversionType)
@@ -196,6 +224,7 @@ struct MainView: View {
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     let sourceType: UIImagePickerController.SourceType
+    let onImageSelected: () -> Void
     @Environment(\.presentationMode) var presentationMode
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -221,6 +250,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
+                parent.onImageSelected()
             }
             parent.presentationMode.wrappedValue.dismiss()
         }

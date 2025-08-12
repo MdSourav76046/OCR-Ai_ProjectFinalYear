@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import UIKit
 
 @MainActor
 class MainViewModel: ObservableObject {
@@ -26,24 +25,18 @@ class MainViewModel: ObservableObject {
     // MARK: - Document Upload Methods
     func uploadDocument(image: UIImage, conversionType: ConversionType) async {
         do {
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-                showError(message: "Failed to process image")
-                return
-            }
-            
-            let fileName = "document_\(UUID().uuidString)"
-            let downloadURL = try await firebaseService.uploadDocument(imageData: imageData, fileName: fileName)
-            
+            // Create document record without image upload
             let document = Document(
                 id: UUID().uuidString,
-                fileName: fileName,
+                fileName: "document_\(UUID().uuidString)",
                 fileType: .image,
                 conversionType: conversionType,
-                originalImage: downloadURL,
+                originalImage: nil, // No image upload to avoid Storage dependency
                 outputFormat: .pdf
             )
             
-            try await firebaseService.saveDocumentToHistory(document: document)
+            // Skip Firestore save to avoid dependency issues
+            // try await firebaseService.saveDocumentToHistory(document: document)
             
             showingFormatPicker = true
             

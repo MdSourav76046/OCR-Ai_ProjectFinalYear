@@ -17,6 +17,7 @@ class AuthManager: ObservableObject {
     @Published var currentUser: User?
     
     private let firebaseService = FirebaseService.shared
+    private let ocrHistoryService = OCRHistoryService.shared
     
     private init() {
         checkAuthState()
@@ -32,16 +33,27 @@ class AuthManager: ObservableObject {
     // MARK: - Authentication State
     func checkAuthState() {
         let user = Auth.auth().currentUser
+        let wasAuthenticated = isAuthenticated
+        let previousUserId = currentUser?.id
         isAuthenticated = user != nil
         
         // Clear form if user is not authenticated
         if !isAuthenticated {
             clearForm()
             currentUser = nil
+            // Stop OCR history observing when user logs out
+            ocrHistoryService.stopObserving()
         } else {
             // Load current user data if authenticated
             Task {
                 await loadCurrentUser()
+            }
+            
+            // Check if user changed (either login or switch)
+            let currentUserId = user?.uid
+            if !wasAuthenticated || previousUserId != currentUserId {
+                print("User changed from \(previousUserId ?? "none") to \(currentUserId ?? "none")")
+                ocrHistoryService.switchUser()
             }
         }
     }
@@ -89,6 +101,8 @@ class AuthManager: ObservableObject {
             try firebaseService.signOut()
             isAuthenticated = false
             clearForm()
+            // Stop OCR history observing when user signs out
+            ocrHistoryService.stopObserving()
         } catch {
             showError(message: error.localizedDescription)
         }

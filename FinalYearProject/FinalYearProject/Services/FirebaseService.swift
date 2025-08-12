@@ -35,7 +35,6 @@ class FirebaseService: ObservableObject {
         )
         
         try await saveUserToFirestore(user)
-        
         return user
     }
     
