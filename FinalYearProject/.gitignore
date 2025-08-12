@@ -8,7 +8,7 @@ DerivedData/
 # Sensitive Files (Never commit these!)
 GoogleService-Info.plist
 Config/APIKeys.swift
-
+Info-plist
 # OS Files
 .DS_Store
 Thumbs.db
