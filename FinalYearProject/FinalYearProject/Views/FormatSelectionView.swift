@@ -3,68 +3,67 @@ import SwiftUI
 struct FormatSelectionView: View {
     let selectedImage: UIImage
     let conversionType: ConversionType
-    @StateObject private var viewModel = FormatSelectionViewModel()
+    @StateObject private var viewModel = FormatSelectionViewModel.shared
+    @StateObject private var mainViewModel = MainViewModel.shared
+    @StateObject private var themeManager = ThemeManager.shared
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                LinearGradient(
-                    colors: [Color(red: 0.1, green: 0.1, blue: 0.2), Color(red: 0.2, green: 0.2, blue: 0.4)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+        ZStack {
+            themeManager.currentTheme.backgroundGradient
                 .ignoresSafeArea(.all)
+            
+            VStack(spacing: 30) {
+                headerSection
                 
-                VStack(spacing: 30) {
-                    headerSection
-                    
-                    imagePreviewSection
-                    
-                    formatOptionsSection
-                    
-                    proceedButton
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                imagePreviewSection
+                
+                formatOptionsSection
+                
+                proceedButton
+                
+                Spacer()
             }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
         .navigationBarHidden(true)
         .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK") { }
+            Button("OK") {
+                // Reset app state and dismiss all sheets
+                MainViewModel.shared.resetState()
+                FormatSelectionViewModel.shared.resetState()
+                dismiss()
+            }
         } message: {
             Text(viewModel.errorMessage)
         }
         .alert("Success", isPresented: $viewModel.showSuccess) {
             Button("OK") {
+                // Reset app state and dismiss
+                MainViewModel.shared.resetState()
+                FormatSelectionViewModel.shared.resetState()
                 dismiss()
             }
         } message: {
             Text("Document processed successfully!")
         }
-        .sheet(isPresented: $viewModel.showTextResult) {
-            TextResultView(
-                extractedText: viewModel.extractedText,
-                originalImage: selectedImage,
-                conversionType: conversionType.rawValue,
-                outputFormat: viewModel.selectedFormat?.rawValue ?? "text"
-            )
-        }
+
+
     }
     
     // MARK: - Header Section
     private var headerSection: some View {
         HStack {
             Button(action: {
-                dismiss()
+                // Navigate back to image editor
+                mainViewModel.navigateBack()
             }) {
                 Image(systemName: "chevron.left")
                     .font(.title2)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                     .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.2))
+                    .background(themeManager.currentTheme.cardBackground)
                     .clipShape(Circle())
             }
             
@@ -73,7 +72,7 @@ struct FormatSelectionView: View {
             Text("Select Format")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
             
             Spacer()
             
@@ -98,7 +97,7 @@ struct FormatSelectionView: View {
             Text("Select your preferable format type")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(themeManager.currentTheme.textColor)
                 .multilineTextAlignment(.center)
             
             LazyVGrid(columns: [
@@ -121,18 +120,18 @@ struct FormatSelectionView: View {
                 // Format Icon
                 Image(systemName: formatIcon(for: format))
                     .font(.system(size: 30))
-                    .foregroundColor(viewModel.selectedFormat == format ? .white : .white.opacity(0.8))
+                    .foregroundColor(viewModel.selectedFormat == format ? themeManager.currentTheme.textColor : themeManager.currentTheme.secondaryTextColor)
                 
                 // Format Name
                 Text(format.displayName)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(themeManager.currentTheme.textColor)
                     .multilineTextAlignment(.center)
                 
                 // Selection Indicator
                 Image(systemName: viewModel.selectedFormat == format ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(viewModel.selectedFormat == format ? .green : .white.opacity(0.6))
+                    .foregroundColor(viewModel.selectedFormat == format ? .green : themeManager.currentTheme.secondaryTextColor)
                     .font(.title3)
             }
             .frame(height: 120)
@@ -140,14 +139,14 @@ struct FormatSelectionView: View {
             .padding(.vertical, 16)
             .background(
                 viewModel.selectedFormat == format ? 
-                    Color.white.opacity(0.2) : Color.white.opacity(0.1)
+                    themeManager.currentTheme.cardBackground : themeManager.currentTheme.inputFieldBackground
             )
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
                         viewModel.selectedFormat == format ? 
-                            Color.green.opacity(0.6) : Color.white.opacity(0.2),
+                            Color.green.opacity(0.6) : themeManager.currentTheme.inputFieldBorder,
                         lineWidth: viewModel.selectedFormat == format ? 2 : 1
                     )
             )
@@ -196,13 +195,17 @@ struct FormatSelectionView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(
-                LinearGradient(
-                    colors: viewModel.selectedFormat != nil ? 
-                        [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.6, green: 0.3, blue: 0.9)] :
-                        [Color.gray.opacity(0.5), Color.gray.opacity(0.5)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+                Group {
+                    if viewModel.selectedFormat != nil {
+                        LinearGradient(
+                            colors: [Color(red: 0.4, green: 0.2, blue: 0.8), Color(red: 0.6, green: 0.3, blue: 0.9)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    } else {
+                        themeManager.currentTheme.buttonBackground
+                    }
+                }
             )
             .foregroundColor(.white)
             .cornerRadius(12)

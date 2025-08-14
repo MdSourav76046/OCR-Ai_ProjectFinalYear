@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class LoginViewModel: ObservableObject, LoginFormViewModelProtocol {
+class LoginViewModel: ObservableObject, @preconcurrency LoginFormViewModelProtocol {
     @Published var email = ""
     @Published var password = ""
     @Published var isPasswordVisible = false

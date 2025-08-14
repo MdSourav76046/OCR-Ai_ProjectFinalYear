@@ -16,6 +16,9 @@ class FormatSelectionViewModel: ObservableObject {
     private let mistralService = MistralAIService.shared
     private let ocrHistoryService = OCRHistoryService.shared
     
+    // Shared instance for reset functionality
+    static let shared = FormatSelectionViewModel()
+    
     // MARK: - Document Processing
     func processDocument(image: UIImage, conversionType: ConversionType) async {
         guard let selectedFormat = selectedFormat else {
@@ -47,15 +50,33 @@ class FormatSelectionViewModel: ObservableObject {
             
             print("✅ FormatSelectionViewModel: Save function called")
             
-            // Show text result for text formats
+            // Navigate to text result for text formats
             if selectedFormat == .text {
-                showTextResult = true
+                MainViewModel.shared.navigateToTextResult(
+                    extractedText: extractedText,
+                    originalImage: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue
+                )
             } else {
                 showSuccess = true
             }
             
         } catch {
-            showError(message: error.localizedDescription)
+            let errorMessage: String
+            if let mistralError = error as? MistralAIError {
+                errorMessage = mistralError.localizedDescription
+            } else {
+                errorMessage = error.localizedDescription
+            }
+            
+            showError(message: errorMessage)
+            print("❌ FormatSelectionViewModel: Error occurred - \(errorMessage)")
+            
+            // Auto-reset state on error to ensure clean state
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.resetState()
+            }
         }
         
         isLoading = false
@@ -64,6 +85,19 @@ class FormatSelectionViewModel: ObservableObject {
     // MARK: - Simulate Processing
     private func simulateProcessing() async throws {
         try await Task.sleep(nanoseconds: 2_000_000_000)
+    }
+    
+    // MARK: - Reset State
+    func resetState() {
+        print("🔄 FormatSelectionViewModel: Resetting format selection state")
+        selectedFormat = nil
+        isLoading = false
+        showError = false
+        showSuccess = false
+        errorMessage = ""
+        extractedText = ""
+        showTextResult = false
+        print("✅ FormatSelectionViewModel: Format selection state reset complete")
     }
     
     // MARK: - Helper Methods

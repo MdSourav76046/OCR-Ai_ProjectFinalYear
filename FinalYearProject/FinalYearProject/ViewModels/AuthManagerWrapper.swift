@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class AuthManagerWrapper: ObservableObject, LoginFormViewModelProtocol {
+class AuthManagerWrapper: ObservableObject, @preconcurrency LoginFormViewModelProtocol {
     private let authManager = AuthManager.shared
     
     var email: String {

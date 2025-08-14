@@ -90,7 +90,7 @@ class SavedPDFService: ObservableObject {
         
         let itemId = UUID().uuidString
         let timestamp = Date().timeIntervalSince1970
-        let deviceName = UIDevice.current.name
+        let deviceName = await UIDevice.current.name
         
         // Prepare image data
         var imageBase64: String? = nil

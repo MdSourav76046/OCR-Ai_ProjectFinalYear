@@ -171,7 +171,7 @@ class FirebaseService: ObservableObject {
             .order(by: "createdAt", descending: true)
             .getDocuments()
         
-        return try snapshot!.documents.map { document in
+        return snapshot!.documents.map { document in
             let data = document.data()
             return Document(
                 id: data["id"] as? String ?? "",

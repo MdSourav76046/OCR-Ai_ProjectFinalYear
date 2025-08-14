@@ -3,12 +3,13 @@ import SwiftUI
 struct SavedPDFView: View {
     @StateObject private var savedPDFService = SavedPDFService.shared
     @StateObject private var themeManager = ThemeManager.shared
-    @Environment(\.presentationMode) private var presentationMode
+    @StateObject private var mainViewModel = MainViewModel.shared
     @State private var searchText = ""
     @State private var showingDeleteAlert = false
     @State private var pdfToDelete: SavedPDF?
     @State private var showingStorageInfo = false
     @State private var showingLimitAlert = false
+    @State private var showingClearAllAlert = false
     
     private var filteredPDFs: [SavedPDF] {
         if searchText.isEmpty {
@@ -19,28 +20,26 @@ struct SavedPDFView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                themeManager.currentTheme.backgroundGradient
-                    .ignoresSafeArea(.all)
+        ZStack {
+            themeManager.currentTheme.backgroundGradient
+                .ignoresSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // Header
+                headerSection
                 
-                VStack(spacing: 0) {
-                    // Header
-                    headerSection
-                    
-                    // Search Bar
-                    searchSection
-                    
-                    // PDFs List
-                    pdfsListSection
-                }
+                // Search Bar
+                searchSection
+                
+                // PDFs List
+                pdfsListSection
             }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    presentationMode.wrappedValue.dismiss()
+                    mainViewModel.navigateBack()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
@@ -95,6 +94,14 @@ struct SavedPDFView: View {
         } message: {
             Text("You have reached the maximum limit of 20 saved PDFs. Please delete some existing PDFs to save new ones.")
         }
+        .alert("Clear All PDFs", isPresented: $showingClearAllAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear All", role: .destructive) {
+                savedPDFService.clearAllSavedPDFs()
+            }
+        } message: {
+            Text("Are you sure you want to delete all saved PDFs? This action cannot be undone.")
+        }
     }
     
     // MARK: - Header Section
@@ -132,7 +139,7 @@ struct SavedPDFView: View {
                     // Clear all button
                     if !savedPDFService.savedPDFs.isEmpty {
                         Button(action: {
-                            savedPDFService.clearAllSavedPDFs()
+                            showingClearAllAlert = true
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "trash")
@@ -465,28 +472,28 @@ struct SavedPDFDetailView: View {
                     .padding(.vertical, 20)
                 }
             }
-        }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "chevron.left")
-                            .font(.title3)
-                        Text("Back")
-                            .font(.body)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.left")
+                                .font(.title3)
+                            Text("Back")
+                                .font(.body)
+                        }
+                        .foregroundColor(themeManager.currentTheme.textColor)
                     }
-                    .foregroundColor(themeManager.currentTheme.textColor)
                 }
-            }
-            
-            ToolbarItem(placement: .principal) {
-                Text("PDF Details")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(themeManager.currentTheme.textColor)
+                
+                ToolbarItem(placement: .principal) {
+                    Text("PDF Details")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(themeManager.currentTheme.textColor)
+                }
             }
         }
         .sheet(isPresented: $showingShareSheet) {

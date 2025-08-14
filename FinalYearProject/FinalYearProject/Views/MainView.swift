@@ -1,15 +1,12 @@
 import SwiftUI
 
 struct MainView: View {
-    @StateObject private var viewModel = MainViewModel()
+    @StateObject private var viewModel = MainViewModel.shared
     @StateObject private var themeManager = ThemeManager.shared
     @State private var showingMenu = false
-    @State private var navigateToSettings = false
-    @State private var navigateToHistory = false
-    @State private var navigateToSavedPDFs = false
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $viewModel.navigationPath) {
             ZStack {
                 // Background gradient
                 themeManager.currentTheme.backgroundGradient
@@ -37,26 +34,33 @@ struct MainView: View {
                         viewModel.signOut()
                     },
                     onSettingsTapped: {
-                        navigateToSettings = true
+                        viewModel.navigateToSettings()
                     },
                     onHistoryTapped: {
-                        navigateToHistory = true
+                        viewModel.navigateToHistory()
                     },
                     onSavedPDFsTapped: {
-                        navigateToSavedPDFs = true
+                        viewModel.navigateToSavedPDFs()
                     }
                 )
             }
             
-            // Navigation Destinations
-            .navigationDestination(isPresented: $navigateToSettings) {
-                SettingsView()
-            }
-            .navigationDestination(isPresented: $navigateToHistory) {
-                DocumentHistoryView()
-            }
-            .navigationDestination(isPresented: $navigateToSavedPDFs) {
-                SavedPDFView()
+            // Navigation Destinations using NavigationPath
+            .navigationDestination(for: NavigationDestination.self) { destination in
+                switch destination {
+                case .imageEditor(let image, let conversionType):
+                    ImageEditorView(originalImage: image, conversionType: conversionType)
+                case .formatSelection(let image, let conversionType):
+                    FormatSelectionView(selectedImage: image, conversionType: conversionType)
+                case .textResult(let extractedText, let originalImage, let conversionType, let outputFormat):
+                    TextResultView(extractedText: extractedText, originalImage: originalImage, conversionType: conversionType, outputFormat: outputFormat)
+                case .settings:
+                    SettingsView()
+                case .history:
+                    DocumentHistoryView()
+                case .savedPDFs:
+                    SavedPDFView()
+                }
             }
         }
         .navigationBarHidden(true)
@@ -72,17 +76,25 @@ struct MainView: View {
         }
         .sheet(isPresented: $viewModel.showingImagePicker) {
             ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .photoLibrary, onImageSelected: {
-                viewModel.showingFormatPicker = true
+                // Delay navigation to ensure sheet is dismissed first
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let image = viewModel.selectedImage {
+                        viewModel.navigateToImageEditor(image: image, conversionType: viewModel.selectedConversionType)
+                    }
+                }
             })
         }
         .sheet(isPresented: $viewModel.showingCamera) {
             ImagePicker(selectedImage: $viewModel.selectedImage, sourceType: .camera, onImageSelected: {
-                viewModel.showingFormatPicker = true
+                // Delay navigation to ensure sheet is dismissed first
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let image = viewModel.selectedImage {
+                        viewModel.navigateToImageEditor(image: image, conversionType: viewModel.selectedConversionType)
+                    }
+                }
             })
         }
-        .sheet(isPresented: $viewModel.showingFormatPicker) {
-            FormatSelectionView(selectedImage: viewModel.selectedImage!, conversionType: viewModel.selectedConversionType)
-        }
+
         .alert("Error", isPresented: $viewModel.showError) {
             Button("OK") { }
         } message: {

@@ -5,7 +5,7 @@ struct TextResultView: View {
     let originalImage: UIImage?
     let conversionType: String
     let outputFormat: String
-    @Environment(\.presentationMode) private var presentationMode
+    @StateObject private var mainViewModel = MainViewModel.shared
     @StateObject private var themeManager = ThemeManager.shared
     @StateObject private var savedPDFService = SavedPDFService.shared
     @State private var showingShareSheet = false
@@ -16,32 +16,32 @@ struct TextResultView: View {
     @State private var saveError: String?
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                themeManager.currentTheme.backgroundGradient
-                    .ignoresSafeArea(.all)
+        ZStack {
+            themeManager.currentTheme.backgroundGradient
+                .ignoresSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                // Header
+                headerSection
                 
-                VStack(spacing: 20) {
-                    // Header
-                    headerSection
-                    
-                    // Text Content
-                    textContentSection
-                    
-                    // Action Buttons
-                    actionButtonsSection
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
+                // Text Content
+                textContentSection
+                
+                // Action Buttons
+                actionButtonsSection
+                
+                Spacer()
             }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    presentationMode.wrappedValue.dismiss()
+                    // Navigate directly back to main page using NavigationPath
+                    mainViewModel.navigateToRoot()
+                    FormatSelectionViewModel.shared.resetState()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
@@ -86,6 +86,8 @@ struct TextResultView: View {
         } message: {
             Text("Your PDF has been saved successfully!")
         }
+
+
     }
     
     // MARK: - Header Section
@@ -265,17 +267,7 @@ struct TextResultView: View {
     }
 }
 
-// MARK: - Share Sheet
-struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
+
 
 #Preview {
     TextResultView(

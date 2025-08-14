@@ -1,6 +1,24 @@
 import Foundation
 import UIKit
 
+// MARK: - Timeout Helper
+func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask {
+            try await operation()
+        }
+        
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw MistralAIError.timeout
+        }
+        
+        let result = try await group.next()!
+        group.cancelAll()
+        return result
+    }
+}
+
 // MARK: - Models
 struct OCRResponse: Codable {
     let pages: [OCRPage]
@@ -110,7 +128,7 @@ class MistralAIService: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30.0
+        request.timeoutInterval = 60.0  // Increased timeout to 60 seconds
         
         // Create request body - DON'T include include_image_base64
         let requestBody: [String: Any] = [
@@ -125,8 +143,10 @@ class MistralAIService: ObservableObject {
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
             
-            // Make API call
-            let (data, response) = try await URLSession.shared.data(for: request)
+            // Make API call with timeout handling
+            let (data, response) = try await withTimeout(seconds: 60) {
+                try await URLSession.shared.data(for: request)
+            }
             
             // Check response status
             if let httpResponse = response as? HTTPURLResponse {
@@ -275,6 +295,7 @@ enum MistralAIError: Error, LocalizedError {
     case noTextFound
     case apiError(String)
     case invalidURL
+    case timeout
     
     var errorDescription: String? {
         switch self {
@@ -286,6 +307,8 @@ enum MistralAIError: Error, LocalizedError {
             return "API Error: \(message)"
         case .invalidURL:
             return "Invalid API URL"
+        case .timeout:
+            return "Request timed out. Please try again with a smaller image or check your internet connection."
         }
     }
 }

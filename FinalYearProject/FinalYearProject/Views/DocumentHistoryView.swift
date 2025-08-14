@@ -3,11 +3,12 @@ import SwiftUI
 struct DocumentHistoryView: View {
     @StateObject private var ocrHistoryService = OCRHistoryService.shared
     @StateObject private var themeManager = ThemeManager.shared
-    @Environment(\.presentationMode) private var presentationMode
+    @StateObject private var mainViewModel = MainViewModel.shared
     @State private var searchText = ""
     @State private var showingDeleteAlert = false
     @State private var itemToDelete: OCRHistoryItem?
     @State private var showingStorageInfo = false
+    @State private var showingClearAllAlert = false
     
     private var filteredItems: [OCRHistoryItem] {
         if searchText.isEmpty {
@@ -18,28 +19,26 @@ struct DocumentHistoryView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                themeManager.currentTheme.backgroundGradient
-                    .ignoresSafeArea(.all)
+        ZStack {
+            themeManager.currentTheme.backgroundGradient
+                .ignoresSafeArea(.all)
+            
+            VStack(spacing: 0) {
+                // Header
+                headerSection
                 
-                VStack(spacing: 0) {
-                    // Header
-                    headerSection
-                    
-                    // Search Bar
-                    searchSection
-                    
-                    // Documents List
-                    documentsListSection
-                }
+                // Search Bar
+                searchSection
+                
+                // Documents List
+                documentsListSection
             }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    presentationMode.wrappedValue.dismiss()
+                    mainViewModel.navigateBack()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
@@ -96,6 +95,14 @@ struct DocumentHistoryView: View {
         } message: {
             Text(ocrHistoryService.errorMessage ?? "No storage information available")
         }
+        .alert("Clear All Documents", isPresented: $showingClearAllAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear All", role: .destructive) {
+                ocrHistoryService.clearAllHistory()
+            }
+        } message: {
+            Text("Are you sure you want to delete all documents? This action cannot be undone.")
+        }
     }
     
     // MARK: - Header Section
@@ -136,7 +143,7 @@ struct DocumentHistoryView: View {
                     }
                     
                     Button(action: {
-                        ocrHistoryService.clearAllHistory()
+                        showingClearAllAlert = true
                     }) {
                         Text("Clear All")
                             .font(.caption)
@@ -496,28 +503,7 @@ struct OCRHistoryDetailView: View {
     }
 }
 
-// MARK: - Info Row Helper
-struct InfoRow: View {
-    let label: String
-    let value: String
-    @StateObject private var themeManager = ThemeManager.shared
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(themeManager.currentTheme.secondaryTextColor)
-                .frame(width: 80, alignment: .leading)
-            
-            Text(value)
-                .font(.caption)
-                .foregroundColor(themeManager.currentTheme.textColor)
-                .fontWeight(.medium)
-            
-            Spacer()
-        }
-    }
-}
+
 
 #Preview {
     DocumentHistoryView()

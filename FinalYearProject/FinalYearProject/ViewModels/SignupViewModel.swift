@@ -49,7 +49,7 @@ class SignupViewModel: ObservableObject {
         isLoading = true
         
         do {
-            let user = try await firebaseService.signUp(
+            _ = try await firebaseService.signUp(
                 email: email,
                 password: password,
                 username: username,
@@ -85,7 +85,7 @@ class SignupViewModel: ObservableObject {
         isLoading = true
         
         do {
-            let user = try await firebaseService.signInWithGoogle()
+            _ = try await firebaseService.signInWithGoogle()
             
             // Clear form after successful signup
             clearForm()
