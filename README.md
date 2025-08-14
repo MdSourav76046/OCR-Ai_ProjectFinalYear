@@ -7,7 +7,7 @@
       <span class="badge">iOS 15.0+</span>
       <span class="badge">Swift 5.5+</span>
       <span class="badge">Xcode 14.0+</span>
-      <span class="badge">Firebase</span>
+      <span class="badge">Mistral AI OCR</span>
       <span class="badge">AI Powered</span>
   </div>
 </div>
