@@ -8,6 +8,8 @@ DerivedData/
 # Sensitive Files (Never commit these!)
 GoogleService-Info.plist
 Config/APIKeys.swift
+APIKeys_backup.swift
+FinalYearProject/Config/APIKeys.swift
 Info-plist
 gpu_base_model2/
 setup/
