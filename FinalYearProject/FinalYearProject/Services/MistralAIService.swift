@@ -274,18 +274,111 @@ class MistralAIService: ObservableObject {
     
     // MARK: - Text Processing
     func processExtractedText(_ text: String) -> String {
-        // Clean up the extracted text
         var processedText = text
         
-        // Remove extra whitespace
-        processedText = processedText.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        // 1. Remove unwanted symbols (hashtags, currency symbols, etc.)
+        let unwantedSymbols = ["#", "¢", "§", "¶", "†", "‡", "•", "‰", "™", "©", "®"]
+        for symbol in unwantedSymbols {
+            processedText = processedText.replacingOccurrences(of: symbol, with: "")
+        }
         
-        // Remove empty lines
-        processedText = processedText.components(separatedBy: .newlines)
-            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .joined(separator: "\n")
+        // 2. Clean up multiple dots (ellipsis and random dots)
+        // Replace 3 or more dots with proper ellipsis
+        processedText = processedText.replacingOccurrences(
+            of: "\\.{3,}", 
+            with: "...", 
+            options: .regularExpression
+        )
         
-        return processedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Remove scattered single dots that aren't part of sentences
+        processedText = processedText.replacingOccurrences(
+            of: "(?<!\\w)\\.(?!\\w|\\.)", 
+            with: "", 
+            options: .regularExpression
+        )
+        
+        // 3. Fix spacing issues while preserving line structure
+        let lines = processedText.components(separatedBy: .newlines)
+        let cleanedLines = lines.compactMap { line -> String? in
+            var cleanLine = line
+            
+            // Remove excessive spaces within lines (but keep single spaces)
+            cleanLine = cleanLine.replacingOccurrences(
+                of: " {2,}", 
+                with: " ", 
+                options: .regularExpression
+            )
+            
+            // Remove spaces at the beginning and end of lines
+            cleanLine = cleanLine.trimmingCharacters(in: .whitespaces)
+            
+            // Keep the line if it has content after cleaning
+            return cleanLine.isEmpty ? nil : cleanLine
+        }
+        
+        // 4. Reconstruct text preserving actual line breaks
+        processedText = cleanedLines.joined(separator: "\n")
+        
+        // 5. Fix common OCR spacing issues
+        // Fix space before punctuation
+        processedText = processedText.replacingOccurrences(
+            of: " +([,.!?;:])", 
+            with: "$1", 
+            options: .regularExpression
+        )
+        
+        // Fix missing space after punctuation (but not for decimals)
+        processedText = processedText.replacingOccurrences(
+            of: "([,.!?;:])(?![0-9\\s])", 
+            with: "$1 ", 
+            options: .regularExpression
+        )
+        
+        // 6. Remove trailing/leading whitespace from the entire text
+        processedText = processedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return processedText
+    }
+    
+    // MARK: - Advanced Text Cleaning (Optional)
+    func advancedTextCleaning(_ text: String) -> String {
+        var processedText = text
+        
+        // Remove common OCR artifacts
+        let ocrArtifacts = [
+            "\\|",  // Vertical bars often misread
+            "\\\\", // Backslashes
+            "_{2,}", // Multiple underscores
+            "-{3,}", // Multiple dashes (not em-dash)
+            "\\*{2,}", // Multiple asterisks
+        ]
+        
+        for artifact in ocrArtifacts {
+            processedText = processedText.replacingOccurrences(
+                of: artifact, 
+                with: "", 
+                options: .regularExpression
+            )
+        }
+        
+        // Fix common character misreads
+        let characterFixes = [
+            ("0(?=[A-Za-z])", "O"), // Zero to O when followed by letters
+            ("(?<=[A-Za-z])0", "o"), // Zero to o when preceded by letters
+            ("1(?=[A-Za-z])", "l"), // One to l when followed by letters
+            ("rn", "m"), // Common OCR mistake
+            ("vv", "w"), // Another common mistake
+        ]
+        
+        for (pattern, replacement) in characterFixes {
+            processedText = processedText.replacingOccurrences(
+                of: pattern, 
+                with: replacement, 
+                options: .regularExpression
+            )
+        }
+        
+        return processedText
     }
 }
 

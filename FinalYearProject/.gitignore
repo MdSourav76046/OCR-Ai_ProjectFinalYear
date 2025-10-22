@@ -9,9 +9,14 @@ DerivedData/
 GoogleService-Info.plist
 Config/APIKeys.swift
 Info-plist
+gpu_base_model2/
+setup/
+
 # OS Files
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+
+#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

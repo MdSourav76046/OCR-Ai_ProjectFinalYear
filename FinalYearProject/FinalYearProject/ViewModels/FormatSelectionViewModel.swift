@@ -5,6 +5,7 @@ import UIKit
 @MainActor
 class FormatSelectionViewModel: ObservableObject {
     @Published var selectedFormat: OutputFormat?
+    @Published var correctGrammar = false
     @Published var isLoading = false
     @Published var showError = false
     @Published var showSuccess = false
@@ -15,6 +16,7 @@ class FormatSelectionViewModel: ObservableObject {
     private let firebaseService = FirebaseService.shared
     private let mistralService = MistralAIService.shared
     private let ocrHistoryService = OCRHistoryService.shared
+    private let grammarService = GrammarCorrectionService.shared
     
     // Shared instance for reset functionality
     static let shared = FormatSelectionViewModel()
@@ -38,6 +40,16 @@ class FormatSelectionViewModel: ObservableObject {
             print("🖼️ Image size: \(image.size)")
             print("🔄 Conversion type: \(conversionType.rawValue)")
             print("📄 Output format: \(selectedFormat.rawValue)")
+            print("🔧 Correct grammar: \(correctGrammar)")
+            
+            // Apply grammar correction if enabled
+            if correctGrammar && !extractedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                print("🔧 FormatSelectionViewModel: Applying grammar correction...")
+                let correctedText = try await grammarService.correctGrammar(extractedText)
+                extractedText = correctedText
+                print("✅ FormatSelectionViewModel: Grammar correction applied")
+                print("📝 Corrected text: \(extractedText.prefix(50))...")
+            }
             
             // Save document to Firebase Database
             ocrHistoryService.saveOCRResult(
@@ -91,6 +103,7 @@ class FormatSelectionViewModel: ObservableObject {
     func resetState() {
         print("🔄 FormatSelectionViewModel: Resetting format selection state")
         selectedFormat = nil
+        correctGrammar = false
         isLoading = false
         showError = false
         showSuccess = false

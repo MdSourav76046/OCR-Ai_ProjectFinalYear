@@ -108,6 +108,44 @@ struct FormatSelectionView: View {
                     formatOptionCard(format: format)
                 }
             }
+            
+            // Grammar Correction Toggle
+            grammarCorrectionToggle
+        }
+    }
+    
+    // MARK: - Grammar Correction Toggle
+    private var grammarCorrectionToggle: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "checkmark.circle")
+                    .font(.title2)
+                    .foregroundColor(themeManager.currentTheme.textColor)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Correct Grammar")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(themeManager.currentTheme.textColor)
+                    
+                    Text("Use AI to correct grammar in extracted text")
+                        .font(.caption)
+                        .foregroundColor(themeManager.currentTheme.secondaryTextColor)
+                }
+                
+                Spacer()
+                
+                Toggle("", isOn: $viewModel.correctGrammar)
+                    .toggleStyle(SwitchToggleStyle(tint: .green))
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(themeManager.currentTheme.cardBackground)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
+            )
         }
     }
     
