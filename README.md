@@ -7,7 +7,7 @@
       <span class="badge">iOS 15.0+</span>
       <span class="badge">Swift 5.5+</span>
       <span class="badge">Xcode 14.0+</span>
-      <span class="badge">Firebase</span>
+      <span class="badge">Mistral AI OCR</span>
       <span class="badge">AI Powered</span>
   </div>
 </div>
@@ -60,7 +60,7 @@
           <li>Firebase Authentication - User management</li>
           <li>Firebase Firestore - Cloud database</li>
           <li>Firebase Storage - File storage and sync</li>
-          <li>Apple Vision Framework - Built-in OCR capabilities</li>
+          <li>Mistral AI OCR - Built-in OCR capabilities</li>
       </ul>
   </div>
   
@@ -79,7 +79,7 @@
       📱 iOS App (SwiftUI)<br>
       ├── 🔐 Authentication Layer (Firebase Auth)<br>
       ├── 📸 Input Processing (Camera/Gallery/PDF)<br>
-      ├── 🤖 OCR Engine (Vision Framework)<br>
+      ├── 🤖 OCR Engine (Mistral AI OCR)<br>
       ├── ✨ AI Text Correction (Custom Model)<br>
       ├── 💾 Export Engine (Multiple Formats)<br>
       ├── ☁️ Cloud Storage (Firebase)<br>
