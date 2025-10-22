@@ -10,5 +10,5 @@ struct APIKeys {
     
         // Hugging Face Space API (Your deployed model)
         static let huggingFaceAPIURL = "https://mdsourav76046-t5-grammar-correction-api.hf.space/api/predict"
-        static let huggingFaceToken = "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"
+        // Note: Hugging Face Space API doesn't require authentication
 }
