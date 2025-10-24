@@ -14,26 +14,36 @@ struct TextResultView: View {
     @State private var pdfTitle = ""
     @State private var isSaving = false
     @State private var saveError: String?
+    @State private var editableText: String = ""
+    @State private var isEditing: Bool = false
     
     var body: some View {
         ZStack {
             themeManager.currentTheme.backgroundGradient
                 .ignoresSafeArea(.all)
             
-            VStack(spacing: 20) {
-                // Header
-                headerSection
-                
-                // Text Content
-                textContentSection
-                
-                // Action Buttons
-                actionButtonsSection
-                
-                Spacer()
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header (hide when editing to save space)
+                    if !isEditing {
+                        headerSection
+                    }
+                    
+                    // Text Content
+                    textContentSection
+                    
+                    // Action Buttons
+                    actionButtonsSection
+                    
+                    Spacer(minLength: 20)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+        }
+        .onAppear {
+            // Initialize editable text when view appears
+            editableText = extractedText
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -61,7 +71,7 @@ struct TextResultView: View {
             }
         }
         .sheet(isPresented: $showingShareSheet) {
-            ShareSheet(activityItems: [extractedText])
+            ShareSheet(activityItems: [editableText])
         }
         .alert("Save PDF", isPresented: $showingTitleInput) {
             TextField("Enter PDF title", text: $pdfTitle)
@@ -113,25 +123,63 @@ struct TextResultView: View {
     // MARK: - Text Content Section
     private var textContentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Extracted Text:")
-                .font(.headline)
-                .fontWeight(.semibold)
-                .foregroundColor(themeManager.currentTheme.textColor)
+            HStack {
+                Text("Extracted Text:")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(themeManager.currentTheme.textColor)
+                
+                Spacer()
+                
+                // Edit indicator
+                HStack(spacing: 4) {
+                    Image(systemName: "pencil")
+                        .font(.caption)
+                    Text(isEditing ? "Editing" : "Tap to Edit")
+                        .font(.caption)
+                }
+                .foregroundColor(isEditing ? .blue : themeManager.currentTheme.secondaryTextColor)
+                
+                // Done button when editing
+                if isEditing {
+                    Button("Done") {
+                        isEditing = false
+                        hideKeyboard()
+                    }
+                    .font(.caption)
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(6)
+                }
+            }
             
-            ScrollView {
-                Text(extractedText.isEmpty ? "No text found in image" : extractedText)
+            ZStack(alignment: .topLeading) {
+                // Editable TextEditor
+                TextEditor(text: $editableText)
                     .font(.body)
                     .foregroundColor(themeManager.currentTheme.textColor)
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .scrollContentBackground(.hidden) // Hide default background
                     .background(themeManager.currentTheme.cardBackground)
+                    .frame(minHeight: isEditing ? 300 : 200, maxHeight: isEditing ? 500 : 400)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(themeManager.currentTheme.inputFieldBorder, lineWidth: 1)
+                            .stroke(isEditing ? Color.blue.opacity(0.5) : themeManager.currentTheme.inputFieldBorder, lineWidth: isEditing ? 2 : 1)
                     )
+                
+                // Placeholder text when empty
+                if editableText.isEmpty {
+                    Text("No text found in image")
+                        .font(.body)
+                        .foregroundColor(themeManager.currentTheme.secondaryTextColor)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 20)
+                        .allowsHitTesting(false)
+                }
             }
-            .frame(maxHeight: 400)
         }
     }
     
@@ -179,7 +227,7 @@ struct TextResultView: View {
             
             // Copy Button
             Button(action: {
-                UIPasteboard.general.string = extractedText
+                UIPasteboard.general.string = editableText
             }) {
                 HStack(spacing: 12) {
                     Image(systemName: "doc.on.doc")
@@ -245,7 +293,7 @@ struct TextResultView: View {
             do {
                 try await savedPDFService.savePDF(
                     title: pdfTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-                    text: extractedText,
+                    text: editableText,
                     image: originalImage,
                     conversionType: conversionType,
                     outputFormat: outputFormat,
@@ -265,6 +313,11 @@ struct TextResultView: View {
             }
         }
     }
+    
+    // MARK: - Helper Methods
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 }
 
 
@@ -277,3 +330,4 @@ struct TextResultView: View {
         outputFormat: "text"
     )
 }
+

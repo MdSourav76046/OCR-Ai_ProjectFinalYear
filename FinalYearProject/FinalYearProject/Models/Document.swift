@@ -57,7 +57,7 @@ enum OutputFormat: String, CaseIterable, Codable {
     case pdf = "PDF Format"
     case docs = "DOCS Format"
     case word = "WORD Format"
-    case odt = "ODT Format"
+    case cv = "CV Format"
     case text = "TEXT Format"
     case application = "Application"
     

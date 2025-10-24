@@ -17,6 +17,7 @@ class FormatSelectionViewModel: ObservableObject {
     private let mistralService = MistralAIService.shared
     private let ocrHistoryService = OCRHistoryService.shared
     private let grammarService = GrammarCorrectionService.shared
+    private let applicationFormatService = ApplicationFormatService.shared
     
     // Shared instance for reset functionality
     static let shared = FormatSelectionViewModel()
@@ -51,26 +52,37 @@ class FormatSelectionViewModel: ObservableObject {
                 print("📝 Corrected text: \(extractedText.prefix(50))...")
             }
             
+            // Apply format-specific processing
+            var finalText = extractedText
+            
+            // Format as application if selected
+            if selectedFormat == .application {
+                print("📝 FormatSelectionViewModel: Formatting as application...")
+                finalText = try await applicationFormatService.formatAsApplication(extractedText)
+                print("✅ FormatSelectionViewModel: Application format applied")
+            }
+            
             // Save document to Firebase Database
             ocrHistoryService.saveOCRResult(
-                text: extractedText,
+                text: finalText,
                 image: image,
                 conversionType: conversionType.rawValue,
                 outputFormat: selectedFormat.rawValue,
-                saveFullImage: false  // Only save thumbnail to save space
+                saveFullImage: false
             )
             
             print("✅ FormatSelectionViewModel: Save function called")
             
-            // Navigate to text result for text formats
-            if selectedFormat == .text {
+            // Navigate to text result for text and application formats
+            if selectedFormat == .text || selectedFormat == .application {
                 MainViewModel.shared.navigateToTextResult(
-                    extractedText: extractedText,
+                    extractedText: finalText,
                     originalImage: image,
                     conversionType: conversionType.rawValue,
                     outputFormat: selectedFormat.rawValue
                 )
             } else {
+                // Other formats - show success
                 showSuccess = true
             }
             
@@ -78,6 +90,8 @@ class FormatSelectionViewModel: ObservableObject {
             let errorMessage: String
             if let mistralError = error as? MistralAIError {
                 errorMessage = mistralError.localizedDescription
+            } else if let appFormatError = error as? ApplicationFormatError {
+                errorMessage = appFormatError.localizedDescription
             } else {
                 errorMessage = error.localizedDescription
             }

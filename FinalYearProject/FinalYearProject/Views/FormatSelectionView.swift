@@ -200,8 +200,8 @@ struct FormatSelectionView: View {
             return "doc.richtext"
         case .word:
             return "doc"
-        case .odt:
-            return "doc.plaintext"
+        case .cv:
+            return "person.text.rectangle"
         case .text:
             return "text.alignleft"
         case .application:
