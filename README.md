@@ -68,7 +68,7 @@
       <h4>AI & Machine Learning</h4>
       <ul>
           <li>Custom Text Correction Model - Proprietary AI for text enhancement</li>
-          <li>Core ML - On-device model inference</li>
+          <li>Uploaded the model in Hugging face and created Api using Hugging face space</li>
           <li>Vision Framework - Text recognition and processing</li>
       </ul>
   </div>
