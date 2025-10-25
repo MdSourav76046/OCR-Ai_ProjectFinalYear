@@ -18,6 +18,9 @@ class FormatSelectionViewModel: ObservableObject {
     private let ocrHistoryService = OCRHistoryService.shared
     private let grammarService = GrammarCorrectionService.shared
     private let applicationFormatService = ApplicationFormatService.shared
+    private let wordFormatService = WordFormatService.shared
+    private let pdfGenerationService = PDFGenerationService.shared
+    private let docxGenerationService = DOCXGenerationService.shared
     
     // Shared instance for reset functionality
     static let shared = FormatSelectionViewModel()
@@ -60,29 +63,76 @@ class FormatSelectionViewModel: ObservableObject {
                 print("📝 FormatSelectionViewModel: Formatting as application...")
                 finalText = try await applicationFormatService.formatAsApplication(extractedText)
                 print("✅ FormatSelectionViewModel: Application format applied")
-            }
-            
-            // Save document to Firebase Database
-            ocrHistoryService.saveOCRResult(
-                text: finalText,
-                image: image,
-                conversionType: conversionType.rawValue,
-                outputFormat: selectedFormat.rawValue,
-                saveFullImage: false
-            )
-            
-            print("✅ FormatSelectionViewModel: Save function called")
-            
-            // Navigate to text result for text and application formats
-            if selectedFormat == .text || selectedFormat == .application {
+                
+                // Save to history
+                ocrHistoryService.saveOCRResult(
+                    text: finalText,
+                    image: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue,
+                    saveFullImage: false
+                )
+                
+                // Navigate to text result
                 MainViewModel.shared.navigateToTextResult(
                     extractedText: finalText,
                     originalImage: image,
                     conversionType: conversionType.rawValue,
                     outputFormat: selectedFormat.rawValue
                 )
-            } else {
-                // Other formats - show success
+            }
+            // PDF and Word formats - show editable preview first
+            else if selectedFormat == .pdf || selectedFormat == .word {
+                print("📝 FormatSelectionViewModel: Formatting text for \(selectedFormat.rawValue)...")
+                
+                // Format text for better appearance
+                finalText = try await wordFormatService.formatAsWord(extractedText)
+                
+                // Save to history
+                ocrHistoryService.saveOCRResult(
+                    text: finalText,
+                    image: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue,
+                    saveFullImage: false
+                )
+                
+                // Navigate to text result with file generation option
+                MainViewModel.shared.navigateToTextResult(
+                    extractedText: finalText,
+                    originalImage: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue
+                )
+            }
+            // Text format - just show text
+            else if selectedFormat == .text {
+                // Save to history
+                ocrHistoryService.saveOCRResult(
+                    text: extractedText,
+                    image: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue,
+                    saveFullImage: false
+                )
+                
+                // Navigate to text result
+                MainViewModel.shared.navigateToTextResult(
+                    extractedText: extractedText,
+                    originalImage: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue
+                )
+            }
+            // Other formats - show success
+            else {
+                ocrHistoryService.saveOCRResult(
+                    text: extractedText,
+                    image: image,
+                    conversionType: conversionType.rawValue,
+                    outputFormat: selectedFormat.rawValue,
+                    saveFullImage: false
+                )
                 showSuccess = true
             }
             
@@ -92,6 +142,12 @@ class FormatSelectionViewModel: ObservableObject {
                 errorMessage = mistralError.localizedDescription
             } else if let appFormatError = error as? ApplicationFormatError {
                 errorMessage = appFormatError.localizedDescription
+            } else if let wordFormatError = error as? WordFormatError {
+                errorMessage = wordFormatError.localizedDescription
+            } else if let pdfError = error as? PDFGenerationError {
+                errorMessage = pdfError.localizedDescription
+            } else if let docxError = error as? DOCXGenerationError {
+                errorMessage = docxError.localizedDescription
             } else {
                 errorMessage = error.localizedDescription
             }

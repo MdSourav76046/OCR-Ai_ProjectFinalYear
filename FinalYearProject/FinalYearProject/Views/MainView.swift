@@ -54,6 +54,8 @@ struct MainView: View {
                     FormatSelectionView(selectedImage: image, conversionType: conversionType)
                 case .textResult(let extractedText, let originalImage, let conversionType, let outputFormat):
                     TextResultView(extractedText: extractedText, originalImage: originalImage, conversionType: conversionType, outputFormat: outputFormat)
+                case .fileGenerationResult(let fileURL, let fileType, let originalImage):
+                    FileGenerationResultView(fileURL: fileURL, fileType: fileType, originalImage: originalImage)
                 case .settings:
                     SettingsView()
                 case .history:

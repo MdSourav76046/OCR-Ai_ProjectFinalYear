@@ -72,6 +72,10 @@ class MainViewModel: ObservableObject {
         navigationPath.append(NavigationDestination.textResult(extractedText: extractedText, originalImage: originalImage, conversionType: conversionType, outputFormat: outputFormat))
     }
     
+    func navigateToFileResult(fileURL: URL, fileType: String, originalImage: UIImage?) {
+        navigationPath.append(NavigationDestination.fileGenerationResult(fileURL: fileURL, fileType: fileType, originalImage: originalImage))
+    }
+    
     func navigateToSettings() {
         navigationPath.append(NavigationDestination.settings)
     }

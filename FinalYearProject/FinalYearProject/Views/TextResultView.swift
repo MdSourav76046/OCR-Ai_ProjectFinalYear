@@ -16,6 +16,8 @@ struct TextResultView: View {
     @State private var saveError: String?
     @State private var editableText: String = ""
     @State private var isEditing: Bool = false
+    @State private var isGeneratingFile: Bool = false
+    @State private var generationError: String?
     
     var body: some View {
         ZStack {
@@ -95,6 +97,15 @@ struct TextResultView: View {
             Button("OK") { }
         } message: {
             Text("Your PDF has been saved successfully!")
+        }
+        .alert("Generation Error", isPresented: .constant(generationError != nil)) {
+            Button("OK") {
+                generationError = nil
+            }
+        } message: {
+            if let error = generationError {
+                Text(error)
+            }
         }
 
 
@@ -186,6 +197,11 @@ struct TextResultView: View {
     // MARK: - Action Buttons Section
     private var actionButtonsSection: some View {
         VStack(spacing: 16) {
+            // Generate File Button (for PDF and Word formats)
+            if outputFormat.lowercased().contains("pdf") || outputFormat.lowercased().contains("word") {
+                generateFileButton
+            }
+            
             // Save Button
             Button(action: {
                 if savedPDFService.isLimitReached() {
@@ -310,6 +326,92 @@ struct TextResultView: View {
                     isSaving = false
                     saveError = error.localizedDescription
                 }
+            }
+        }
+    }
+    
+    // MARK: - Generate File Button
+    private var generateFileButton: some View {
+        Button(action: {
+            Task {
+                await generateFile()
+            }
+        }) {
+            HStack(spacing: 12) {
+                if isGeneratingFile {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Image(systemName: outputFormat.lowercased().contains("pdf") ? "doc.text.fill" : "doc.richtext.fill")
+                        .font(.title3)
+                }
+                
+                Text(isGeneratingFile ? "Generating..." : "Generate \(outputFormat.contains("PDF") ? "PDF" : "Word") File")
+                    .font(.body)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(
+                LinearGradient(
+                    colors: [Color.orange, Color.orange.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            .shadow(color: Color.orange.opacity(0.3), radius: 8, x: 0, y: 4)
+            .disabled(isGeneratingFile)
+        }
+    }
+    
+    // MARK: - Generate File Function
+    private func generateFile() async {
+        isGeneratingFile = true
+        generationError = nil
+        
+        do {
+            if outputFormat.lowercased().contains("pdf") {
+                // Generate PDF
+                let fileURL = try await PDFGenerationService.shared.generatePDF(
+                    text: editableText,
+                    title: "OCR Document"
+                )
+                
+                await MainActor.run {
+                    isGeneratingFile = false
+                    // Navigate to file result
+                    mainViewModel.navigateToFileResult(
+                        fileURL: fileURL,
+                        fileType: "PDF",
+                        originalImage: originalImage
+                    )
+                }
+            } else if outputFormat.lowercased().contains("word") {
+                // Generate Word document
+                let fileURL = try await DOCXGenerationService.shared.generateDOCX(
+                    text: editableText,
+                    title: "OCR Document"
+                )
+                
+                await MainActor.run {
+                    isGeneratingFile = false
+                    // Navigate to file result
+                    mainViewModel.navigateToFileResult(
+                        fileURL: fileURL,
+                        fileType: "Word",
+                        originalImage: originalImage
+                    )
+                }
+            }
+        } catch {
+            await MainActor.run {
+                isGeneratingFile = false
+                generationError = error.localizedDescription
             }
         }
     }
