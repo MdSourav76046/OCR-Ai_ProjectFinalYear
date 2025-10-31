@@ -23,7 +23,7 @@ class AuthManager: ObservableObject {
         checkAuthState()
         
         // Listen for authentication state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.checkAuthState()
             }

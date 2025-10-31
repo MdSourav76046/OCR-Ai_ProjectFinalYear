@@ -183,12 +183,129 @@ class FirebaseService: ObservableObject {
             )
         }
     }
+    
+    // MARK: - User Profile Operations
+    func updateUserProfile(
+        firstName: String,
+        lastName: String,
+        username: String,
+        dateOfBirth: String?,
+        gender: String?
+    ) async throws {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            throw FirebaseError.userNotFound
+        }
+        
+        // Always save to local storage first (fast and guaranteed)
+        saveProfileToLocalStorage(
+            userId: userId,
+            firstName: firstName,
+            lastName: lastName,
+            username: username,
+            dateOfBirth: dateOfBirth,
+            gender: gender
+        )
+        
+        // Try to update Firestore if available (with timeout to prevent hanging)
+        if let db = db {
+            do {
+                let userData: [String: Any] = [
+                    "firstName": firstName,
+                    "lastName": lastName,
+                    "username": username,
+                    "dateOfBirth": dateOfBirth ?? "",
+                    "gender": gender ?? ""
+                ]
+                
+                // Add timeout to prevent hanging if Firestore is not set up
+                try await withTimeout(seconds: 2) {
+                    try await db.collection("users").document(userId).updateData(userData)
+                }
+                print("✅ Profile saved to Firestore")
+            } catch {
+                // If Firestore fails (database not set up or timeout), that's OK - we already saved locally
+                print("⚠️ Firestore update failed: \(error.localizedDescription)")
+                print("📝 Profile saved to local storage instead")
+            }
+        }
+    }
+    
+    // MARK: - Timeout Helper for Firestore Operations
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw FirebaseError.firestoreNotAvailable
+            }
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
+    
+    // MARK: - Local Storage Fallback
+    private func saveProfileToLocalStorage(
+        userId: String,
+        firstName: String,
+        lastName: String,
+        username: String,
+        dateOfBirth: String?,
+        gender: String?
+    ) {
+        let defaults = UserDefaults.standard
+        let key = "user_profile_\(userId)"
+        
+        let profileData: [String: Any] = [
+            "firstName": firstName,
+            "lastName": lastName,
+            "username": username,
+            "dateOfBirth": dateOfBirth ?? "",
+            "gender": gender ?? ""
+        ]
+        
+        defaults.set(profileData, forKey: key)
+        print("✅ Profile saved to local storage")
+    }
+    
+    // MARK: - Load Profile from Local Storage
+    func loadProfileFromLocalStorage(userId: String) -> [String: String]? {
+        let defaults = UserDefaults.standard
+        let key = "user_profile_\(userId)"
+        
+        if let profileData = defaults.dictionary(forKey: key) as? [String: String] {
+            return profileData
+        }
+        
+        return nil
+    }
+    
+    func changePassword(currentPassword: String, newPassword: String) async throws {
+        guard let user = Auth.auth().currentUser,
+              let email = user.email else {
+            throw FirebaseError.userNotFound
+        }
+        
+        // Re-authenticate user with current password
+        let credential = EmailAuthProvider.credential(withEmail: email, password: currentPassword)
+        try await user.reauthenticate(with: credential)
+        
+        // Update password
+        try await user.updatePassword(to: newPassword)
+    }
 }
 
 enum FirebaseError: Error, LocalizedError {
     case userNotFound
     case uploadFailed
     case downloadFailed
+    case invalidCredentials
+    case passwordUpdateFailed
+    case firestoreNotAvailable
     
     var errorDescription: String? {
         switch self {
@@ -198,6 +315,12 @@ enum FirebaseError: Error, LocalizedError {
             return "Failed to upload document"
         case .downloadFailed:
             return "Failed to download document"
+        case .invalidCredentials:
+            return "Invalid current password"
+        case .passwordUpdateFailed:
+            return "Failed to update password"
+        case .firestoreNotAvailable:
+            return "Firestore database is not set up. Profile saved locally."
         }
     }
 } 

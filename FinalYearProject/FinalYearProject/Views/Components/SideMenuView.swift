@@ -90,21 +90,30 @@ struct SideMenuView: View {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isShowing = false
                 }
-                onSettingsTapped()
+                // Small delay to ensure menu closes before navigation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    onSettingsTapped()
+                }
             }
             
             menuItem(icon: "clock.arrow.circlepath", title: "History") {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isShowing = false
                 }
-                onHistoryTapped()
+                // Small delay to ensure menu closes before navigation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    onHistoryTapped()
+                }
             }
             
             menuItem(icon: "doc.fill", title: "Saved PDFs") {
                 withAnimation(.easeInOut(duration: 0.3)) {
                     isShowing = false
                 }
-                onSavedPDFsTapped()
+                // Small delay to ensure menu closes before navigation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    onSavedPDFsTapped()
+                }
             }
             
             menuItem(icon: "square.and.arrow.up", title: "Invite friends") {

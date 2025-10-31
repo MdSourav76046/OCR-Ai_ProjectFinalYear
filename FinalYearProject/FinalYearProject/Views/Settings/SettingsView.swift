@@ -2,41 +2,38 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.presentationMode) private var presentationMode
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var mainViewModel = MainViewModel.shared
     @State private var showingImagePicker = false
     @State private var selectedImage: UIImage?
-    @State private var navigateToTheme = false
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background gradient
-                themeManager.currentTheme.backgroundGradient
-                    .ignoresSafeArea(.all)
+        ZStack {
+            // Background gradient
+            themeManager.currentTheme.backgroundGradient
+                .ignoresSafeArea(.all)
+            
+            VStack(spacing: 24) {
+                // Profile Section
+                profileSection
                 
-                VStack(spacing: 24) {
-                    // Profile Section
-                    profileSection
-                    
-                    // Account Settings
-                    accountSettingsSection
-                    
-                    // App Settings
-                    appSettingsSection
-                    
-                    Spacer(minLength: 50)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                // Account Settings
+                accountSettingsSection
+                
+                // App Settings
+                appSettingsSection
+                
+                Spacer(minLength: 50)
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button(action: {
-                    presentationMode.wrappedValue.dismiss()
+                    mainViewModel.navigateBack()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chevron.left")
@@ -58,9 +55,6 @@ struct SettingsView: View {
                     .foregroundColor(themeManager.currentTheme.textColor)
                     .padding(.horizontal, 20)
             }
-        }
-        .navigationDestination(isPresented: $navigateToTheme) {
-            ThemeSelectionView()
         }
         .sheet(isPresented: $showingImagePicker) {
             ImagePicker(selectedImage: $selectedImage, sourceType: .photoLibrary, onImageSelected: {})
@@ -128,10 +122,18 @@ struct SettingsView: View {
             sectionHeader("Account")
             
             VStack(spacing: 0) {
-                settingsRow(icon: "person.fill", title: "Edit Profile", action: {})
-                settingsRow(icon: "lock.fill", title: "Change Password", action: {})
-                settingsRow(icon: "envelope.fill", title: "Email Preferences", action: {})
-                settingsRow(icon: "bell.fill", title: "Notifications", action: {})
+                settingsRow(icon: "person.fill", title: "Edit Profile", action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.editProfile)
+                })
+                settingsRow(icon: "lock.fill", title: "Change Password", action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.changePassword)
+                })
+                settingsRow(icon: "envelope.fill", title: "Email Preferences", action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.emailPreferences)
+                })
+                settingsRow(icon: "bell.fill", title: "Notifications", action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.notifications)
+                })
             }
             .background(themeManager.currentTheme.cardBackground)
             .cornerRadius(12)
@@ -145,11 +147,17 @@ struct SettingsView: View {
             
             VStack(spacing: 0) {
                 settingsRow(icon: "paintbrush.fill", title: "Theme", subtitle: themeManager.currentTheme.rawValue, action: {
-                    navigateToTheme = true
+                    mainViewModel.navigationPath.append(NavigationDestination.themeSelection)
                 })
-                settingsRow(icon: "globe", title: "Language", subtitle: "English", action: {})
-                settingsRow(icon: "doc.text.fill", title: "Default Format", subtitle: "PDF", action: {})
-                settingsRow(icon: "icloud.fill", title: "Auto Backup", action: {})
+                settingsRow(icon: "globe", title: "Language", subtitle: UserDefaults.standard.string(forKey: "selectedLanguage") ?? "English", action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.languageSelection)
+                })
+                settingsRow(icon: "doc.text.fill", title: "Default Format", subtitle: defaultFormatSubtitle, action: {
+                    mainViewModel.navigationPath.append(NavigationDestination.defaultFormat)
+                })
+                settingsRow(icon: "icloud.fill", title: "Auto Backup", action: {
+                    // Auto Backup - intentionally left empty as requested
+                })
             }
             .background(themeManager.currentTheme.cardBackground)
             .cornerRadius(12)
@@ -221,6 +229,14 @@ struct SettingsView: View {
         // For regular signup users, combine firstName and lastName
         let fullName = [user.firstName, user.lastName].filter { !$0.isEmpty }.joined(separator: " ")
         return fullName.isEmpty ? user.username : fullName
+    }
+    
+    private var defaultFormatSubtitle: String {
+        if let saved = UserDefaults.standard.string(forKey: "defaultFormat"),
+           let format = OutputFormat(rawValue: saved) {
+            return format.displayName
+        }
+        return "PDF Format"
     }
 }
 

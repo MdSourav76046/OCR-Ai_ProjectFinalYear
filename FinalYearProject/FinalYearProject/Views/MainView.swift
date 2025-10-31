@@ -62,6 +62,20 @@ struct MainView: View {
                     DocumentHistoryView()
                 case .savedPDFs:
                     SavedPDFView()
+                case .editProfile:
+                    EditProfileView()
+                case .changePassword:
+                    ChangePasswordView()
+                case .emailPreferences:
+                    EmailPreferencesView()
+                case .notifications:
+                    NotificationsView()
+                case .themeSelection:
+                    ThemeSelectionView()
+                case .languageSelection:
+                    LanguageSelectionView()
+                case .defaultFormat:
+                    DefaultFormatView()
                 }
             }
         }

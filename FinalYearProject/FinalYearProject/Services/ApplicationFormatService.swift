@@ -80,11 +80,6 @@ class ApplicationFormatService: ObservableObject {
         dateFormatter.dateStyle = .long
         let formattedDate = dateFormatter.string(from: Date())
         
-        // Split text into paragraphs
-        let paragraphs = text.components(separatedBy: "\n\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        
         // Build formatted application
         var application = ""
         

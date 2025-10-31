@@ -17,7 +17,7 @@ struct RootView: View {
                         showingSignup = false
                         authManager.checkAuthState()
                     }
-                    .onChange(of: showingLogin) { newValue in
+                    .onChange(of: showingLogin) { _, newValue in
                         if newValue {
                             showingSignup = false
                         }

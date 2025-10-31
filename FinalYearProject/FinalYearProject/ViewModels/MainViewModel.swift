@@ -30,25 +30,20 @@ class MainViewModel: ObservableObject {
     
     // MARK: - Document Upload Methods
     func uploadDocument(image: UIImage, conversionType: ConversionType) async {
-        do {
-            // Create document record without image upload
-            _ = Document(
-                id: UUID().uuidString,
-                fileName: "document_\(UUID().uuidString)",
-                fileType: .image,
-                conversionType: conversionType,
-                originalImage: nil, // No image upload to avoid Storage dependency
-                outputFormat: .pdf
-            )
-            
-            // Skip Firestore save to avoid dependency issues
-            // try await firebaseService.saveDocumentToHistory(document: document)
-            
-            navigateToFormatSelection(image: image, conversionType: conversionType)
-            
-        } catch {
-            showError(message: error.localizedDescription)
-        }
+        // Create document record without image upload
+        _ = Document(
+            id: UUID().uuidString,
+            fileName: "document_\(UUID().uuidString)",
+            fileType: .image,
+            conversionType: conversionType,
+            originalImage: nil, // No image upload to avoid Storage dependency
+            outputFormat: .pdf
+        )
+        
+        // Skip Firestore save to avoid dependency issues
+        // try await firebaseService.saveDocumentToHistory(document: document)
+        
+        navigateToFormatSelection(image: image, conversionType: conversionType)
     }
     
     // MARK: - Helper Methods

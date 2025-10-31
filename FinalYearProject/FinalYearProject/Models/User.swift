@@ -10,7 +10,7 @@ struct User: Codable, Identifiable {
     let gender: String?
     let createdAt: Date
     
-    init(id: String, email: String, username: String, firstName: String, lastName: String, dateOfBirth: String? = nil, gender: String? = nil) {
+    init(id: String, email: String, username: String, firstName: String, lastName: String, dateOfBirth: String? = nil, gender: String? = nil, createdAt: Date? = nil) {
         self.id = id
         self.email = email
         self.username = username
@@ -18,7 +18,7 @@ struct User: Codable, Identifiable {
         self.lastName = lastName
         self.dateOfBirth = dateOfBirth
         self.gender = gender
-        self.createdAt = Date()
+        self.createdAt = createdAt ?? Date()
     }
 }
 

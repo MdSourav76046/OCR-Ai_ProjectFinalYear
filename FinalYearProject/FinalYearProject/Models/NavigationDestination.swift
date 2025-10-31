@@ -10,6 +10,14 @@ enum NavigationDestination: Hashable {
     case settings
     case history
     case savedPDFs
+    // Settings sub-views
+    case editProfile
+    case changePassword
+    case emailPreferences
+    case notifications
+    case themeSelection
+    case languageSelection
+    case defaultFormat
 }
 
 // MARK: - Navigation Extensions
@@ -23,6 +31,13 @@ extension NavigationDestination {
         case .settings: return "settings"
         case .history: return "history"
         case .savedPDFs: return "savedPDFs"
+        case .editProfile: return "editProfile"
+        case .changePassword: return "changePassword"
+        case .emailPreferences: return "emailPreferences"
+        case .notifications: return "notifications"
+        case .themeSelection: return "themeSelection"
+        case .languageSelection: return "languageSelection"
+        case .defaultFormat: return "defaultFormat"
         }
     }
 }
